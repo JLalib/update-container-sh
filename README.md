@@ -1,43 +1,37 @@
-# 🐳 update-container.sh — Automatiza actualizaciones Docker Compose
+# 🐳 update-container.sh
 
-[![GitHub](https://img.shields.io/github/stars/JLalib/update-container.sh?style=social)](https://github.com/JLalib/update-container.sh)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://docs.docker.com/compose/)
-[![License](https://img.shields.io/github/license/JLalib/update-container.sh)](LICENSE)
-
-Script Bash profesional para actualizar contenedores Docker Compose de forma segura, idempotente y lista para producción. Pull + Up + Prune en un solo comando.
-
----
+[![GitHub stars](https://img.shields.io/github/stars/JLalib/update-container.sh?style=for-the-badge&logo=github)](https://github.com/JLalib/update-container.sh/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/JLalib/update-container.sh?style=for-the-badge&logo=github)](https://github.com/JLalib/update-container.sh/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/JLalib/update-container.sh?style=for-the-badge&logo=github)](https://github.com/JLalib/update-container.sh/issues)
+[![Docker](https://img.shields.io/badge/Docker-Compatible-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 ## 📋 Descripción general
 
-**update-container.sh** automatiza el ciclo completo de actualización de contenedores Docker Compose autohospedados: descarga imágenes nuevas (`docker compose pull`), relanza servicios (`docker compose up -d`) y limpia imágenes obsoletas (`docker image prune -f`). Incluye validación segura de entrada, error handling robusto, modo dual (interactivo o por argumento) y salida visual con emojis. Diseñado para homelabs y sysadmins que buscan reducir riesgo operacional y ahorrar tiempo en mantenimiento.
+**update-container.sh** es un script Bash profesional diseñado para automatizar la actualización de contenedores Docker Compose autohospedados. Ejecuta el flujo completo de mantenimiento: descarga de nuevas imágenes (`docker compose pull`), relanzamiento de servicios (`docker compose up -d`) y limpieza de imágenes obsoletas (`docker image prune -f`).
 
----
+Está pensado para **homelabs** y administradores de sistemas que buscan reducir el riesgo operacional y el tiempo invertido en tareas repetitivas, ofreciendo validación segura de entrada, manejo robusto de errores (`set -uo pipefail`) y salida visual amigable con emojis. Funciona en modo interactivo (pide el nombre) o por argumento (ideal para `cron`), asumiendo una estructura de directorios estándar en `$HOME/docker/`.
 
 ## ✨ Características principales
 
-- 🔄 **Modo dual**: interactivo (pide nombre) o por argumento (`./update-container.sh authentik`)
-- 🛡️ **Validación segura**: previene path traversal (`../`, `/`) y entradas vacías
-- ⚙️ **Error handling robusto**: `set -uo pipefail`, cada paso validado, salida inmediata en error
-- 📥 **Pull + Up combo**: `docker compose pull` → `docker compose up -d` en secuencia atómica
-- 🧹 **Limpieza automática**: `docker image prune -f` libera espacio de imágenes dangling
-- 🎨 **Feedback visual**: emojis 📥🚀✅❌🧹 para progreso claro en consola
-- 🏠 **Personalizable con `$HOME`**: estructura `$HOME/docker/<contenedor>/`, funciona con cualquier usuario
-- ♻️ **Idempotente**: seguro ejecutar múltiples veces, mismo resultado
-- ⏰ **Cron-ready**: automatiza updates nocturnos pasando nombre por argumento
-- 📦 **Zero dependencias**: solo Bash + Docker CLI (v2 `docker compose`)
-
----
+- 🔄 **Modo dual**: Interactivo (prompt) o por argumento CLI (`./update-container.sh authentik`).
+- 🛡️ **Validación segura**: Previene *path traversal* (`../`, `/`) y entradas vacías.
+- ⚙️ **Error handling robusto**: `set -uo pipefail`; cada paso validado individualmente; fallo detiene ejecución inmediata.
+- 📥 **Pull + Up atómico**: `docker compose pull` → `docker compose up -d` en secuencia garantizada.
+- 🧹 **Limpieza automática**: `docker image prune -f` libera espacio de imágenes *dangling* tras actualizar.
+- 🎨 **Feedback visual**: Emojis y colores en consola (📥🚀✅❌🧹) para seguimiento claro.
+- 🏠 **Rutas relativas a `$HOME`**: Funciona con cualquier usuario sin *hardcodear* paths (`$HOME/docker/`).
+- ♻️ **Idempotente**: Seguro de ejecutar múltiples veces; mismo resultado.
+- ⏰ **Cron-ready**: Diseñado para automatización programada sin intervención manual.
+- 📦 **Zero dependencias**: Solo Bash puro + Docker CLI (v2 `docker compose`).
 
 ## 📋 Requisitos del sistema
 
-- **Bash** ≥ 4.0 (compatible con Linux, macOS, WSL)
-- **Docker Engine** ≥ 20.10 con **Docker Compose v2** (`docker compose` plugin)
-- **Permisos** de ejecución sobre el script (`chmod +x`)
-- **Estructura de directorios** `$HOME/docker/<contenedor>/docker-compose.yml`
-- **Conexión a red** para pull de imágenes desde registry (Docker Hub, GHCR, etc.)
-
----
+- **OS**: Linux (cualquier distro con Bash), macOS, WSL2.
+- **Shell**: Bash ≥ 4.0 (usa `[[ ]]`, `read -rp`, `pipefail`).
+- **Docker Engine**: ≥ 20.10 (con plugin Compose v2 integrado: `docker compose`).
+- **Permisos**: Usuario en grupo `docker` o `sudo` (script no usa `sudo` internamente).
+- **Estructura esperada**: Directorio `$HOME/docker/<contenedor>/docker-compose.yml`.
 
 ## 🐳 Instalación
 
@@ -46,73 +40,24 @@ Script Bash profesional para actualizar contenedores Docker Compose de forma seg
 ```bash
 cd ~
 wget https://raw.githubusercontent.com/JLalib/update-container.sh/main/update-container.sh
-chmod +x update-container.sh
 ```
 
-### Opción B: Copia manual
+### Opción B: Clonar repositorio
 
 ```bash
-# Crea el archivo
-cat > update-container.sh << 'EOF'
-#!/bin/bash
-#
-# update-container.sh
-# Actualiza y relanza un contenedor Docker Compose ubicado en $HOME/docker/
-# (usa el home del usuario que ejecuta el script, sea quien sea)
-#
-# Uso:
-# ./update-container.sh -> pide el nombre por teclado
-# ./update-container.sh nombre -> lo recibe como argumento
-set -uo pipefail
-# -u: variables no definidas dan error | pipefail: falla si falla algún comando en un pipe
-# (Nota: no usamos -e a propósito, porque queremos capturar y reportar errores nosotros mismos)
-DOCKER_BASE_DIR="$HOME/docker"
-# --- 1. Obtener el nombre del contenedor (por argumento o interactivo) ---
-if [ $# -ge 1 ]; then
-    micontenedor="$1"
-else
-    read -rp "Por favor, introduce el nombre del contenedor: " micontenedor
-fi
-# Validación básica: que no esté vacío y no contenga rutas raras (../ etc.)
-if [[ -z "$micontenedor" || "$micontenedor" == *..* || "$micontenedor" == */* ]]; then
-    echo "❌ Nombre de contenedor no válido: '$micontenedor'" >&2
-    exit 1
-fi
-contenedor_dir="${DOCKER_BASE_DIR}/${micontenedor}"
-echo "El nombre del contenedor es: $micontenedor"
-# --- 2. Verificar que el directorio existe ---
-if [ ! -d "$contenedor_dir" ]; then
-    echo "❌ El directorio $contenedor_dir no existe." >&2
-    exit 1
-fi
-# --- 3. Cambiar al directorio ---
-if ! cd "$contenedor_dir"; then
-    echo "❌ No se pudo cambiar al directorio $contenedor_dir." >&2
-    exit 1
-fi
-# --- 4. Pull + up, comprobando cada paso por separado ---
-echo "📥 Descargando imágenes nuevas..."
-if ! docker compose pull; then
-    echo "❌ Hubo un problema al ejecutar 'docker compose pull'." >&2
-    exit 1
-fi
-echo "🚀 Levantando el contenedor..."
-if ! docker compose up -d; then
-    echo "❌ Hubo un problema al ejecutar 'docker compose up -d'." >&2
-    exit 1
-fi
-echo "✅ Contenedor actualizado y en ejecución."
-# --- 5. Limpieza de imágenes obsoletas ---
-echo "🧹 Eliminando imágenes obsoletas de Docker..."
-docker image prune -f
-echo "✅ Todo se ha actualizado correctamente."
-EOF
+git clone https://github.com/JLalib/update-container.sh.git
+cd update-container.sh
+```
+
+### Paso 2: Dar permisos de ejecución
+
+```bash
 chmod +x update-container.sh
 ```
 
-### Verificar estructura de directorios
+### Paso 3: Verificar estructura de directorios
 
-El script espera esta organización:
+El script espera tus stacks en `$HOME/docker/`:
 
 ```text
 $HOME/docker/
@@ -122,91 +67,122 @@ $HOME/docker/
 │   └── docker-compose.yml
 ├── heimdall/
 │   └── docker-compose.yml
-└── update-container.sh   # (opcional, puede estar en ~/)
+└── update-container.sh   # (opcional, puedes dejarlo en ~/)
 ```
 
-> 💡 **Tip**: Si tu estructura difiere (ej. `/opt/docker/`), edita la variable `DOCKER_BASE_DIR` en el script.
-
----
+> 💡 **Tip**: Si tu base es distinta (ej. `/opt/docker/`), edita la variable `DOCKER_BASE_DIR` en la línea 13 del script.
 
 ## ⚙️ Configuración
 
-1. **Personalizar `DOCKER_BASE_DIR`** (línea 13 del script):
+1. **Directorio base**: Modifica `DOCKER_BASE_DIR="$HOME/docker"` (línea 13) si tus stacks están en otra ruta.
+2. **Usuario Docker**: Asegúrate de que el usuario que ejecuta el script pertenezca al grupo `docker`:
    ```bash
-   DOCKER_BASE_DIR="$HOME/docker"  # Cambia si usas otra ruta base
+   sudo usermod -aG docker $USER
+   newgrp docker
    ```
-2. **Asegurar permisos de Docker**: tu usuario debe estar en el grupo `docker` o usar `sudo`.
-3. **Verificar Docker Compose v2**: `docker compose version` debe mostrar v2.x.
-4. **Ubicar el script**: en `~/` (recomendado) o en `$HOME/docker/`.
-5. **Opcional: alias en `.bashrc`** para acceso global:
+3. **Editor preferido**: Para editar el script usa `nano`, `vim` o `code`:
    ```bash
-   alias update-container='~/update-container.sh'
+   nano update-container.sh
    ```
-
----
+4. **Logs persistentes (opcional)**: Redirige salida a archivo en `cron` (ver [Gestión y mantenimiento](#-gestión-y-mantenimiento)).
 
 ## 🚀 Primeros pasos
 
-1. **Descarga e instala** el script (sección Instalación).
-2. **Prepara un contenedor** con su `docker-compose.yml` en `$HOME/docker/<nombre>/`.
-3. **Ejecuta en modo interactivo**:
+1. **Descarga y prepara el script** (ver [Instalación](#-instalación)).
+2. **Coloca tus `docker-compose.yml`** en `$HOME/docker/<nombre-servicio>/`.
+3. **Ejecuta en modo interactivo** para probar:
    ```bash
    ./update-container.sh
-   # Por favor, introduce el nombre del contenedor: authentik
+   # Introduce: authentik
    ```
-4. **O ejecuta directo con argumento**:
-   ```bash
-   ./update-container.sh authentik
+4. **Verifica salida exitosa**:
+   ```text
+   El nombre del contenedor es: authentik
+   📥 Descargando imágenes nuevas...
+   🚀 Levantando el contenedor...
+   ✅ Contenedor actualizado y en ejecución.
+   🧹 Eliminando imágenes obsoletas de Docker...
+   ✅ Todo se ha actualizado correctamente.
    ```
-5. **Verifica salida**: verás 📥 Pull → 🚀 Up → ✅ Éxito → 🧹 Prune → ✅ Final.
-
----
+5. **Automatiza con cron** (ver [Casos de uso](#-casos-de-uso)).
 
 ## 💡 Casos de uso
 
-- **Actualización manual puntual**: `./update-container.sh authentik` antes de dormir.
-- **Cron job semanal**: actualiza `authentik` domingos 3 AM, `dawarich` lunes 4 AM.
-- **Batch update**: loop sobre lista de contenedores en script wrapper.
-- **Pre-backup + update**: `docker compose exec postgres pg_dump > backup.sql && ./update-container.sh dawarich`.
-- **CI/CD ligero**: integra en pipelines simples que requieren pull + up sin dependencias extra.
-
----
+- **Actualización manual puntual**: `./update-container.sh authentik` (un solo comando).
+- **Mantenimiento programado (cron)**: Updates nocturnos semanales sin intervención.
+- **Batch update multi-servicio**: Loop en bash actualiza toda la pila homelab ordenadamente.
+- **Pre-backup hook**: Ejecutar script tras confirmar backup de BD (`pg_dump`, `mysqldump`).
+- **CI/CD ligero**: Integrar en pipelines simples que requieran pull/up de stacks compose.
+- **Entornos multi-usuario**: Cada usuario gestiona sus contenedores en su `$HOME/docker/`.
 
 ## 🔒 Acceso remoto seguro
 
-El script se ejecuta localmente en el host Docker. Para gestión remota:
+Aunque el script se ejecuta localmente, la automatización remota segura implica:
 
-- **SSH + script**: `ssh user@host './update-container.sh authentik'`
-- **Ansible**: usa módulo `command` o `shell` con el script en el host destino.
-- **Portainer / Watchtower**: alternativas GUI/daemon; este script es CLI minimalista y auditable.
-- **Claves SSH sin passphrase + cron remoto**: para automatización entre hosts de confianza.
-
----
+1. **SSH con claves**: Configura acceso sin contraseña (`ssh-copy-id user@host`).
+2. **Comando forzado (opcional)**: En `~/.ssh/authorized_keys` limita la clave a solo ejecutar el script:
+   ```text
+   command="/home/user/update-container.sh authentik",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA...
+   ```
+3. **Sudoers sin pass (si hace falta docker)**: `/etc/sudoers.d/docker-update`:
+   ```text
+   user ALL=(ALL) NOPASSWD: /usr/bin/docker compose pull, /usr/bin/docker compose up -d, /usr/bin/docker image prune -f
+   ```
+   > ⚠️ Preferible añadir usuario a grupo `docker` antes que `sudo`.
 
 ## 🛠️ Gestión y mantenimiento
 
-| Acción | Comando / Método |
-|--------|------------------|
-| **Ver logs de cron** | `tail -f /var/log/update-container.log` |
-| **Debug verbose** | Añade `set -x` tras `set -uo pipefail` en el script |
-| **Probar sin cambios** | `docker compose pull && docker compose config` (dry-run) |
-| **Rollback manual** | `docker compose down && docker compose up -d` (usa imágenes previas) |
-| **Actualizar script** | `wget -O update-container.sh <url> && chmod +x update-container.sh` |
-| **Añadir notificaciones** | Inserta `curl -X POST <webhook>` en bloques `if ! ...; then` |
+### Actualizar el propio script
 
-**Solución de problemas comunes**:
+```bash
+cd ~
+wget -N https://raw.githubusercontent.com/JLalib/update-container.sh/main/update-container.sh
+chmod +x update-container.sh
+```
 
-- ❌ `"El directorio no existe"` → `ls -la ~/docker/authentik/` (verifica `docker-compose.yml`).
-- ❌ `"docker compose command not found"` → instala plugin Compose v2 o cambia a `docker-compose` (v1) en líneas 40 y 46.
-- ❌ `"Permission denied"` → `chmod +x update-container.sh` y usuario en grupo `docker`.
-- ❌ **Cron no ejecuta** → usa ruta absoluta: `/home/usuario/update-container.sh authentik`.
+### Cron jobs recomendados
 
----
+Edita `crontab -e` (usa **rutas absolutas**):
+
+```cron
+# Actualizar authentik cada domingo 03:00
+0 3 * * 0 /home/usuario/update-container.sh authentik >> /var/log/update-authentik.log 2>&1
+
+# Actualizar dawarich cada lunes 04:00
+0 4 * * 1 /home/usuario/update-container.sh dawarich >> /var/log/update-dawarich.log 2>&1
+
+# Batch update todos los domingos 02:00
+0 2 * * 0 for app in authentik dawarich heimdall; do /home/usuario/update-container.sh "$app" >> /var/log/update-batch.log 2>&1; done
+```
+
+### Rotación de logs (logrotate)
+
+Crea `/etc/logrotate.d/update-container`:
+
+```text
+/var/log/update-*.log {
+    weekly
+    rotate 4
+    compress
+    missingok
+    notifempty
+    create 640 usuario usuario
+}
+```
+
+### Debugging verbose
+
+Añade `set -x` tras `set -uo pipefail` para traza completa:
+
+```bash
+set -uo pipefail
+set -x  # Imprime cada comando antes de ejecutar
+```
 
 ## 📝 Licencia
 
-MIT License — libre para uso personal, comercial, modificación y distribución. Ver [LICENSE](LICENSE).
+Este proyecto está licenciado bajo la **Licencia MIT** - ver el archivo [LICENSE](LICENSE) para detalles.
 
 ---
 
-> 📖 **Artículo original**: [Cómo instalar / actualizar contenedores Docker con Script "update-container.sh"](https://genbyte.blogspot.com/2026/08/como-instalar-actualizar-contenedores.html) — Genbyte Blog
+> 📖 **Artículo original**: [Cómo instalar / actualizar contenedores Docker con Script "update-container.sh"](https://genbyte.blogspot.com/2026/08/como-instalar-actualizar-contenedores.html) en **Genbyte**.
